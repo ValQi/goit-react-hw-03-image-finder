@@ -15,7 +15,7 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [setSelectedImage] = useState(null);
 
   useEffect(() => {
     if (!query) return;
