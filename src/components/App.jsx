@@ -1,93 +1,72 @@
-import { Component } from 'react';
-import React from 'react';
-import Notiflix from 'notiflix';
-import axios from 'axios';
-import { AppStyled } from './App.styled';
-import { ImageGallery } from './Img-Gal/ImageGallery.styled';
+import React, { useState, useEffect } from 'react';
+import { ImgGallery } from './Img-Gal/ImageGallery';
 import { Button } from './ButtonFolder/button';
-import { Searchbar } from './SearchbarFolder/Searchbar';
 import { LoaderCont } from './Loader';
+import { Searchbar } from './SearchbarFolder/Searchbar';
+import * as basicLightbox from 'basiclightbox';
+import 'basiclightbox/dist/basicLightbox.min.css';
 
-class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    isLader: false,
-  };
+const API_KEY = '39839158-8a8d39ceaa5479b3be9b78b67';
+const BASE_URL = 'https://pixabay.com/api/';
+const PER_PAGE = 12;
 
-  handelQuery = event => {
-    this.setState({
-      images: [],
-      query: `${Date.now()}/${event}`,
-      page: 1,
-      loadMore: '',
-    });
-  };
+const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  handelLoadMore = () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
-  };
+  useEffect(() => {
+    if (!query) return;
 
-  fetchImages = async () => {
-    const splitQuery = this.state.query.split(/\/(.*)/)[1].trim();
-  
-    if (!splitQuery) {
-      Notiflix.Notify.warning('Write what you need to search please.');
-      return;
-    }
-    try {
-      this.setState({ isLoading: true });
-      const response = await axios.get('https://pixabay.com/api/', {
-        params: {
-          key: '39839158-8a8d39ceaa5479b3be9b78b67',
-          q: splitQuery,
-          page: this.state.page,
-          per_page: 12,
-        },
-      });
-      const { totalHits, hits } = response.data;
-      if (hits.length === 0) {
-        Notiflix.Notify.failure(
-          'We don`t have such an image. Try later.'
+    const fetchImages = async () => {
+      try {
+        setLoading(true);
+
+        const response = await fetch(
+          `${BASE_URL}?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=${PER_PAGE}`
         );
-        return;
+
+        const data = await response.json();
+        setImages((prevImages) => [...prevImages, ...data.hits]);
+      } catch (error) {
+        console.error('Error fetching images:', error);
+      } finally {
+        setLoading(false);
       }
-      this.setState(prevState => ({
-        images: [...prevState.images, ...hits],
-        loadMore: this.state.page < Math.ceil(totalHits / 12),
-      }));
-    } catch (error) {
-      Notiflix.Notify.warning('Sorry dude , something going wrong. Try next time.');
-    } finally {
-      this.setState({ isLoading: false });
-    }
+    };
+
+    fetchImages();
+  }, [query, page]);
+
+  const handleSearch = (newQuery) => {
+    setQuery(newQuery);
+    setPage(1);
+    setImages([]);
+    setSelectedImage(null);
   };
 
-  componentDidUpdate(prevState) {
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
-      this.fetchImages();
-    }
-  }
-  render() {
-    const { images, isLoading, loadMore } = this.state;
-    return (
-      <AppStyled>
-        <Searchbar onSubmit={this.handelQuery} />
+  const loadMoreImages = () => {
+    setPage((prevPage) => prevPage + 1);
+  };
 
-        <ImageGallery hits={images} />
-        {isLoading && <LoaderCont />}
-        {loadMore && <Button onClick={this.handelLoadMore} />}
-      </AppStyled>
-    );
-  }
-}
+  const openModal = (image) => {
+    setSelectedImage(image);
+    const instance = basicLightbox.create(`
+      <img src="${image.largeImageURL}" alt="Large image">
+    `);
+    instance.show();
+  };
 
-export default App
+  return (
+    <div>
+      <Searchbar onSubmit={handleSearch} />
+      <ImgGallery hits={images} onImageClick={openModal} />
+      {loading && <LoaderCont />}
+      {images.length > 0 && !loading && <Button onClick={loadMoreImages} />}
+    </div>
+  );
+};
+
+export default App;

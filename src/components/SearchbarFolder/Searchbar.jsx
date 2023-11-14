@@ -1,17 +1,24 @@
-
-import { StyledSearchForm, StyledSearchFormInput, StyledSearchFormButton, StyledSearchFormButtonLabel, StyledHeaderSearch,} from './Searchbar.styled';
+import React from 'react';
+import {
+  StyledSearchForm,
+  StyledSearchFormInput,
+  StyledSearchFormButton,
+  StyledSearchFormButtonLabel,
+  StyledHeaderSearch,
+} from './Searchbar.styled';
 
 export const Searchbar = ({ onSubmit }) => {
-  const handleSubmit = event => {
+  const handleSubmit = (event) => {
     event.preventDefault();
     const inputValue = event.target.elements.searchInput.value;
     onSubmit(inputValue);
   };
+
   return (
     <StyledHeaderSearch>
       <StyledSearchForm onSubmit={handleSubmit}>
         <StyledSearchFormButton type="submit">
-          <StyledSearchFormButtonLabel></StyledSearchFormButtonLabel>
+          <StyledSearchFormButtonLabel>Search</StyledSearchFormButtonLabel>
         </StyledSearchFormButton>
         <StyledSearchFormInput
           name="searchInput"
