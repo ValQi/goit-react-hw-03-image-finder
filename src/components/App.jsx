@@ -1,11 +1,10 @@
 import { Component } from 'react';
 import React from 'react';
 import Notiflix from 'notiflix';
-
+import axios from 'axios';
 import { AppStyled } from './App.styled';
 import { ImageGallery } from './Img-Gal/ImageGallery.styled';
 import { Button } from './ButtonFolder/button';
-import { AppiImageFinder } from './Appi';
 import { Searchbar } from './SearchbarFolder/Searchbar';
 import { LoaderCont } from './Loader';
 
@@ -14,6 +13,7 @@ class App extends Component {
     images: [],
     query: '',
     page: 1,
+    isLader: false,
   };
 
   handelQuery = event => {
@@ -35,19 +35,26 @@ class App extends Component {
 
   fetchImages = async () => {
     const splitQuery = this.state.query.split(/\/(.*)/)[1].trim();
-
+  
     if (!splitQuery) {
-      Notiflix.Notify.warning('Enter what you need to search.');
+      Notiflix.Notify.warning('Write what you need to search please.');
       return;
     }
     try {
       this.setState({ isLoading: true });
-      const { totalHits, hits } = await AppiImageFinder(splitQuery, this.state.page);
+      const response = await axios.get('https://pixabay.com/api/', {
+        params: {
+          key: '39839158-8a8d39ceaa5479b3be9b78b67',
+          q: splitQuery,
+          page: this.state.page,
+          per_page: 12,
+        },
+      });
+      const { totalHits, hits } = response.data;
       if (hits.length === 0) {
         Notiflix.Notify.failure(
-          'Sorry dude, no images. Maybe try later?'
+          'We don`t have such an image. Try later.'
         );
-
         return;
       }
       this.setState(prevState => ({
@@ -55,7 +62,7 @@ class App extends Component {
         loadMore: this.state.page < Math.ceil(totalHits / 12),
       }));
     } catch (error) {
-      Notiflix.Notify.warning('Ohhhhh, something going wrong, try again');
+      Notiflix.Notify.warning('Sorry dude , something going wrong. Try next time.');
     } finally {
       this.setState({ isLoading: false });
     }
