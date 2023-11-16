@@ -15,7 +15,7 @@ const App = () => {
   const [page, setPage] = useState(1);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [setSelectedImage] = useState(null);
+  const [totalHits, setTotalHits] = useState(0);
 
   useEffect(() => {
     if (!query) return;
@@ -29,6 +29,7 @@ const App = () => {
         );
 
         const data = await response.json();
+        setTotalHits(data.totalHits);
         setImages((prevImages) => [...prevImages, ...data.hits]);
       } catch (error) {
         console.error('Error fetching images:', error);
@@ -44,7 +45,6 @@ const App = () => {
     setQuery(newQuery);
     setPage(1);
     setImages([]);
-    setSelectedImage(null);
   };
 
   const loadMoreImages = () => {
@@ -52,7 +52,6 @@ const App = () => {
   };
 
   const openModal = (image) => {
-    setSelectedImage(image);
     const instance = basicLightbox.create(`
       <img src="${image.largeImageURL}" alt="Large image">
     `);
@@ -64,7 +63,9 @@ const App = () => {
       <Searchbar onSubmit={handleSearch} />
       <ImgGallery hits={images} onImageClick={openModal} />
       {loading && <LoaderCont />}
-      {images.length > 0 && !loading && <Button onClick={loadMoreImages} />}
+      {images.length < totalHits && !loading && (
+        <Button onClick={loadMoreImages} />
+      )}
     </div>
   );
 };
